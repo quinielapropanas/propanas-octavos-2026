@@ -1,0 +1,491 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Pool {
+  id                   String                  @id @default(cuid())
+  name                 String
+  description          String?
+  status               PoolStatus              @default(DRAFT)
+  createdById          String
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime                @updatedAt
+  auditLogs            AuditLog[]
+  bestThirds           BestThirds[]
+  bracketSlots         BracketSlot[]
+  entries              Entry[]
+  groupStandings       GroupStanding[]
+  matches              Match[]
+  officialResults      OfficialResult[]
+  officialTournament   OfficialTournamentData?
+  overrides            Override[]
+  behaviorFlags        PoolBehaviorFlags?
+  deadlines            PoolDeadline[]
+  memberships          PoolMembership[]
+  scoringConcepts      PoolScoringConcept[]
+  createdBy            User                    @relation("PoolCreatedBy", fields: [createdById], references: [id])
+  predictions          Prediction[]
+  rankings             Ranking[]
+  scoreBreakdowns      ScoreBreakdown[]
+  teams                Team[]
+  topScorerPredictions TopScorerPrediction[]
+  userProfiles         UserProfile[]
+
+  @@map("pools")
+}
+
+model PoolScoringConcept {
+  id          String  @id @default(cuid())
+  poolId      String
+  conceptId   Int     @db.SmallInt
+  name        String
+  points      Int     @db.SmallInt
+  isActive    Boolean @default(true)
+  description String?
+  pool        Pool    @relation(fields: [poolId], references: [id], onDelete: Cascade)
+
+  @@unique([poolId, conceptId])
+  @@map("pool_scoring_concepts")
+}
+
+model PoolBehaviorFlags {
+  poolId                      String    @id
+  knockoutMatchScoringEnabled Boolean   @default(false)
+  penaltiesCountForScore      Boolean   @default(false)
+  absoluteGoalDifference      Boolean   @default(true)
+  goleadaThreshold            Int       @default(4) @db.SmallInt
+  golPromedioBandas           Json
+  pool                        Pool      @relation(fields: [poolId], references: [id], onDelete: Cascade)
+  showDraftInRanking          Boolean   @default(true)
+  allowEditAfterResult        Boolean   @default(false)
+  testDeadlineActive          Boolean   @default(false)
+  originalDeadlineAt          DateTime?
+  @@map("pool_behavior_flags")
+}
+
+model PoolDeadline {
+  id         String        @id @default(cuid())
+  poolId     String
+  scope      DeadlineScope
+  scopeKey   String
+  phase      MatchPhase?
+  matchId    String?
+  deadlineAt DateTime
+  match      Match?        @relation(fields: [matchId], references: [id])
+  pool       Pool          @relation(fields: [poolId], references: [id], onDelete: Cascade)
+
+  @@unique([poolId, scopeKey])
+  @@map("pool_deadlines")
+}
+
+model User {
+  id                   String                   @id
+  email                String                   @unique
+  displayName          String
+  country              String?
+  city                 String?
+  status               UserStatus               @default(ACTIVE)
+  timezone             String                   @default("UTC")
+  dstPreference        Boolean                  @default(false)
+  createdAt            DateTime                 @default(now())
+  updatedAt            DateTime                 @updatedAt
+  auditLogsActed       AuditLog[]               @relation("AuditActor")
+  entries              Entry[]
+  resultsLoaded        OfficialResult[]         @relation("ResultLoadedBy")
+  tournamentDataEdited OfficialTournamentData[] @relation("TournamentDataUpdatedBy")
+  overridesCreated     Override[]               @relation("OverrideCreatedBy")
+  memberships          PoolMembership[]
+  poolsCreated         Pool[]                   @relation("PoolCreatedBy")
+  predictions          Prediction[]
+  topScorerPredictions TopScorerPrediction[]
+
+  @@map("users")
+}
+
+model UserProfile {
+  id          String  @id @default(cuid())
+  userId      String
+  poolId      String
+  fullName    String?
+  country     String?
+  city        String?
+  phone       String?
+  extraFields Json?
+  pool        Pool    @relation(fields: [poolId], references: [id])
+  
+  @@unique([userId, poolId])
+  @@map("user_profiles")
+}
+
+model PoolMembership {
+  id       String       @id @default(cuid())
+  poolId   String
+  userId   String
+  role     MemberRole
+  status   MemberStatus @default(ACTIVE)
+  joinedAt DateTime     @default(now())
+  pool     Pool         @relation(fields: [poolId], references: [id], onDelete: Cascade)
+  user     User         @relation(fields: [userId], references: [id])
+
+  @@unique([poolId, userId])
+  @@index([poolId, role])
+  @@map("pool_memberships")
+}
+
+model Entry {
+  id                   String                @id @default(cuid())
+  poolId               String
+  userId               String
+  displayName          String?
+  completionPct        Float                 @default(0)
+  submittedAt          DateTime?
+  lockedAt             DateTime?
+  lockedReason         String?
+  updatedAt            DateTime              @updatedAt
+  entryNumber          Int                   @default(1)
+  status               String                @default("DRAFT")
+  pool                 Pool                  @relation(fields: [poolId], references: [id])
+  user                 User                  @relation(fields: [userId], references: [id])
+  predictions          Prediction[]
+  topScorerPredictions TopScorerPrediction[]
+
+  @@unique([poolId, userId, entryNumber])
+  @@map("entries")
+}
+
+model Team {
+  id                       String                   @id @default(cuid())
+  poolId                   String
+  name                     String
+  shortName                String
+  isoCode                  String?                  @db.Char(3)
+  groupLetter              String                   @db.Char(1)
+  fifaRanking              Int?                     @db.SmallInt
+  flagAssetKey             String?
+  metadata                 Json?
+  awayMatches              Match[]                  @relation("MatchAwayTeam")
+  homeMatches              Match[]                  @relation("MatchHomeTeam")
+  officialTournamentScorer OfficialTournamentData[] @relation("TournamentTopScorerTeam")
+  pool                     Pool                     @relation(fields: [poolId], references: [id], onDelete: Cascade)
+  topScorerPredictions     TopScorerPrediction[]    @relation("TopScorerTeam")
+
+  @@unique([poolId, shortName])
+  @@index([poolId, groupLetter])
+  @@map("teams")
+}
+
+model Match {
+  id          String          @id @default(cuid())
+  poolId      String
+  matchNumber Int             @db.SmallInt
+  phase       MatchPhase
+  groupLetter String?         @db.Char(1)
+  slotId      String
+  homeTeamId  String?
+  awayTeamId  String?
+  homeOrigin  String?
+  awayOrigin  String?
+  parentSlot1 String?
+  parentSlot2 String?
+  scheduledAt DateTime
+  venue       String
+  city        String
+  awayTeam    Team?           @relation("MatchAwayTeam", fields: [awayTeamId], references: [id])
+  homeTeam    Team?           @relation("MatchHomeTeam", fields: [homeTeamId], references: [id])
+  pool        Pool            @relation(fields: [poolId], references: [id], onDelete: Cascade)
+  result      OfficialResult?
+  deadlines   PoolDeadline[]
+  predictions Prediction[]
+
+  @@unique([poolId, matchNumber])
+  @@unique([poolId, slotId])
+  @@index([poolId, phase])
+  @@index([poolId, groupLetter])
+  @@index([poolId, scheduledAt])
+  @@map("matches")
+}
+
+model OfficialResult {
+  id            String   @id @default(cuid())
+  poolId        String
+  matchId       String   @unique
+  homeGoals     Int      @db.SmallInt
+  awayGoals     Int      @db.SmallInt
+  homePenalties Int?     @db.SmallInt
+  awayPenalties Int?     @db.SmallInt
+  fairPlayHome  Json?
+  fairPlayAway  Json?
+  loadedById    String
+  loadedAt      DateTime @default(now())
+  version       Int      @default(1) @db.SmallInt
+  loadedBy      User     @relation("ResultLoadedBy", fields: [loadedById], references: [id])
+  match         Match    @relation(fields: [matchId], references: [id])
+  pool          Pool     @relation(fields: [poolId], references: [id], onDelete: Cascade)
+
+  @@index([poolId])
+  @@map("official_results")
+}
+
+model OfficialTournamentData {
+  id                 String   @id @default(cuid())
+  poolId             String   @unique
+  topScorerName      String?
+  topScorerTeamId    String?
+  topScorerGoals     Int?     @db.SmallInt
+  totalGoalsScored   Int?
+  totalMatchesPlayed Int?     @db.SmallInt
+  realGoalAverage    Decimal? @db.Decimal(5, 3)
+  updatedById        String
+  updatedAt          DateTime @updatedAt
+  notes              String?
+  pool               Pool     @relation(fields: [poolId], references: [id], onDelete: Cascade)
+  topScorerTeam      Team?    @relation("TournamentTopScorerTeam", fields: [topScorerTeamId], references: [id])
+  updatedBy          User     @relation("TournamentDataUpdatedBy", fields: [updatedById], references: [id])
+
+  @@map("official_tournament_data")
+}
+
+model Prediction {
+  id            String           @id @default(cuid())
+  poolId        String
+  userId        String
+  entryId       String
+  matchId       String
+  homeGoals     Int?             @db.SmallInt
+  awayGoals     Int?             @db.SmallInt
+  homePenalties Int?             @db.SmallInt
+  awayPenalties Int?             @db.SmallInt
+  status        PredictionStatus @default(VALID)
+  invalidatedBy String?
+  lockedAt      DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  entry         Entry            @relation(fields: [entryId], references: [id])
+  match         Match            @relation(fields: [matchId], references: [id])
+  pool          Pool             @relation(fields: [poolId], references: [id], onDelete: Cascade)
+  user          User             @relation(fields: [userId], references: [id])
+
+  @@unique([poolId, userId, matchId])
+  @@unique([poolId, entryId, matchId], map: "predictions_poolid_entryid_matchid_key")
+  @@index([poolId, userId])
+  @@index([poolId, matchId])
+  @@map("predictions")
+}
+
+model TopScorerPrediction {
+  id         String   @id @default(cuid())
+  poolId     String
+  userId     String
+  entryId    String
+  teamId     String?
+  playerName String?
+  goals      Int?     @db.SmallInt
+  updatedAt  DateTime @updatedAt
+  entry      Entry    @relation(fields: [entryId], references: [id])
+  pool       Pool     @relation(fields: [poolId], references: [id], onDelete: Cascade)
+  team       Team?    @relation("TopScorerTeam", fields: [teamId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@unique([poolId, entryId])
+  @@map("top_scorer_predictions")
+}
+
+model Override {
+  id             String       @id @default(cuid())
+  poolId         String
+  type           OverrideType
+  targetGroup    String?      @db.Char(1)
+  payload        Json
+  reason         String?
+  createdById    String
+  createdAt      DateTime     @default(now())
+  supersededById String?      @unique
+  createdBy      User         @relation("OverrideCreatedBy", fields: [createdById], references: [id])
+  pool           Pool         @relation(fields: [poolId], references: [id], onDelete: Cascade)
+  supersededBy   Override?    @relation("OverrideChain", fields: [supersededById], references: [id])
+  supersedes     Override?    @relation("OverrideChain")
+
+  @@index([poolId, type])
+  @@map("overrides")
+}
+
+model AuditLog {
+  id            String   @id @default(cuid())
+  poolId        String
+  actorUserId   String?
+  action        String
+  entityType    String
+  entityId      String?
+  payloadBefore Json?
+  payloadAfter  Json?
+  createdAt     DateTime @default(now())
+  actor         User?    @relation("AuditActor", fields: [actorUserId], references: [id])
+  pool          Pool     @relation(fields: [poolId], references: [id], onDelete: Cascade)
+
+  @@index([poolId, createdAt(sort: Desc)])
+  @@index([poolId, entityType])
+  @@map("audit_logs")
+}
+
+model GroupStanding {
+  id           String             @id @default(cuid())
+  poolId       String
+  contextType  DerivedContextType
+  contextKey   String
+  groupLetter  String             @db.Char(1)
+  positions    Json
+  hasOverride  Boolean            @default(false)
+  calculatedAt DateTime           @default(now())
+  version      Int                @default(1) @db.SmallInt
+  pool         Pool               @relation(fields: [poolId], references: [id], onDelete: Cascade)
+
+  @@unique([poolId, contextKey, groupLetter])
+  @@index([poolId, contextType])
+  @@map("group_standings")
+}
+
+model BestThirds {
+  id             String             @id @default(cuid())
+  poolId         String
+  contextType    DerivedContextType
+  contextKey     String
+  ranking        Json
+  confirmed     Boolean  @default(false)
+  combinationKey String?
+  hasOverride    Boolean            @default(false)
+  calculatedAt   DateTime           @default(now())
+  pool           Pool               @relation(fields: [poolId], references: [id], onDelete: Cascade)
+
+  @@unique([poolId, contextKey])
+  @@map("best_thirds")
+}
+
+model BracketSlot {
+  id           String             @id @default(cuid())
+  poolId       String
+  contextType  DerivedContextType
+  contextKey   String
+  slotId       String
+  round        KnockoutRound
+  homeTeamId   String?
+  awayTeamId   String?
+  winnerTeamId String?
+  loserTeamId  String?
+  calculatedAt DateTime           @default(now())
+  pool         Pool               @relation(fields: [poolId], references: [id], onDelete: Cascade)
+
+  @@unique([poolId, contextKey, slotId])
+  @@index([poolId, contextType, round])
+  @@map("bracket_slots")
+}
+
+model ScoreBreakdown {
+  id            String   @id @default(cuid())
+  poolId        String
+  userId        String
+  conceptId     Int      @db.SmallInt
+  breakdownKey  String
+  matchId       String?
+  slotId        String?
+  pointsAwarded Int      @db.SmallInt
+  explanation   String
+  calculatedAt  DateTime @default(now())
+  pool          Pool     @relation(fields: [poolId], references: [id], onDelete: Cascade)
+
+  @@unique([poolId, userId, conceptId, breakdownKey])
+  @@index([poolId, userId])
+  @@index([poolId, userId, conceptId])
+  @@map("score_breakdowns")
+}
+
+model Ranking {
+  id               String   @id @default(cuid())
+  poolId           String
+  userId           String
+  totalPoints      Int      @default(0) @db.SmallInt
+  phase1Points     Int      @default(0) @db.SmallInt
+  phase2Points     Int      @default(0) @db.SmallInt
+  position         Int?     @db.SmallInt
+  conceptTotals    Json?
+  matchesPredicted Int      @default(0) @db.SmallInt
+  calculatedAt     DateTime @default(now())
+  pool             Pool     @relation(fields: [poolId], references: [id], onDelete: Cascade)
+
+  @@unique([poolId, userId])
+  @@index([poolId, totalPoints(sort: Desc)])
+  @@map("rankings")
+}
+
+enum PoolStatus {
+  DRAFT
+  ACTIVE
+  CLOSED
+}
+
+enum MemberRole {
+  ADMIN
+  PARTICIPANT
+}
+
+enum MemberStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum EntryStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  LOCKED
+}
+
+enum MatchPhase {
+  GROUP
+  R32
+  R16
+  QF
+  SF
+  THIRD
+  FINAL
+}
+
+enum DeadlineScope {
+  GLOBAL
+  PHASE
+  MATCH
+}
+
+enum PredictionStatus {
+  VALID
+  INVALIDATED_BY_CASCADE
+}
+
+enum OverrideType {
+  GROUP_STANDING
+  BEST_THIRDS
+}
+
+enum DerivedContextType {
+  OFFICIAL
+  PARTICIPANT
+}
+
+enum KnockoutRound {
+  R32
+  R16
+  QF
+  SF
+  THIRD
+  FINAL
+}

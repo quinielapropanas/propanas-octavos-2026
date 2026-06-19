@@ -1,0 +1,63 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --pp-navy: #0C1E3F;
+  --pp-navy-deep: #080C18;
+  --pp-maroon: #6B1D2A;
+  --pp-gold: #C9A84C;
+  --pp-gold-light: #E8D5A0;
+  --pp-gold-dim: #9A7D30;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --transition-fast: 0.12s ease;
+  --transition-normal: 0.2s ease;
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--pp-navy-deep);
+  color: #EDF0F7;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Score input styling */
+.score-input {
+  @apply w-[46px] h-[46px] text-center text-[22px] font-black rounded-md
+         bg-pp-bg-surface border-2 border-pp-border text-pp-text
+         focus:border-pp-gold focus:outline-none focus:shadow-gold
+         transition-all duration-150;
+}
+.score-input:not(:placeholder-shown) {
+  @apply border-pp-success;
+}
+
+/* Status pills */
+.pill {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-xl text-[10px] font-semibold;
+}
+.pill-success { @apply bg-pp-success/10 text-pp-success border border-pp-success/30; }
+.pill-warning { @apply bg-pp-warning/10 text-pp-warning; }
+.pill-danger { @apply bg-pp-danger/10 text-pp-danger; }
+.pill-muted { @apply bg-pp-text-muted/10 text-pp-text-muted; }
+.pill-info { @apply bg-pp-info/10 text-pp-info; }
+
+/* Rank badges */
+.rank-badge {
+  @apply w-10 h-10 rounded-full flex items-center justify-center font-black text-[15px] flex-shrink-0;
+}
+.rank-1 { background: linear-gradient(135deg, #FFD700, #B8860B); color: var(--pp-navy-deep); }
+.rank-2 { background: linear-gradient(135deg, #D1D5DB, #9CA3AF); color: var(--pp-navy-deep); }
+.rank-3 { background: linear-gradient(135deg, #D97706, #92400E); color: var(--pp-navy-deep); }
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1C2744; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #253358; }
+

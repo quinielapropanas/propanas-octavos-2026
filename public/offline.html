@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#080C18">
+  <title>Sin conexión — ProPanas 2026</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/icon-192.png">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Outfit', -apple-system, system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(107, 29, 42, 0.25), transparent 40%),
+        #080C18;
+      color: #EDF0F7;
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .container { max-width: 380px; }
+
+    .logo {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 24px;
+      border-radius: 20px;
+      background: #0C1E3F;
+      border: 2px solid rgba(201, 168, 76, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 44px;
+      box-shadow: 0 0 20px rgba(201, 168, 76, 0.15);
+      animation: glow 3s ease-in-out infinite;
+    }
+
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 0 12px rgba(201, 168, 76, 0.15); }
+      50% { box-shadow: 0 0 28px rgba(201, 168, 76, 0.4); }
+    }
+
+    .brand {
+      color: #C9A84C;
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 3px;
+      margin-bottom: 4px;
+    }
+
+    .year {
+      color: #626E85;
+      font-size: 10px;
+      letter-spacing: 5px;
+      margin-bottom: 32px;
+    }
+
+    .status-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.8;
+    }
+
+    h1 {
+      color: #EDF0F7;
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    p {
+      color: #A0AABF;
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 28px;
+      max-width: 320px;
+      margin-inline: auto;
+    }
+
+    .hint {
+      color: #626E85;
+      font-size: 12px;
+      margin-top: 20px;
+    }
+
+    button {
+      background: linear-gradient(135deg, #C9A84C, #9A7D30);
+      color: #080C18;
+      border: none;
+      padding: 14px 32px;
+      border-radius: 12px;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: filter 0.15s, transform 0.1s;
+      box-shadow: 0 4px 12px rgba(201, 168, 76, 0.2);
+    }
+
+    button:hover { filter: brightness(1.1); }
+    button:active { transform: translateY(1px); }
+
+    .footer {
+      margin-top: 40px;
+      color: #626E85;
+      font-size: 10px;
+      letter-spacing: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo" aria-hidden="true">⚽</div>
+    <div class="brand">PROPANAS</div>
+    <div class="year">M U N D I A L  ·  2 0 2 6</div>
+
+    <div class="status-icon" aria-hidden="true">📡</div>
+    <h1>Sin conexión</h1>
+    <p>
+      Parece que perdiste la conexión a internet. Tus pronósticos guardados están seguros
+      y se sincronizarán automáticamente cuando vuelvas a estar en línea.
+    </p>
+
+    <button onclick="window.location.reload()" aria-label="Intentar de nuevo">
+      Reintentar
+    </button>
+
+    <p class="hint">
+      Si el problema persiste, verifica tu conexión Wi-Fi o datos móviles.
+    </p>
+
+    <div class="footer">TAMA · BEMBA</div>
+  </div>
+
+  <script>
+    // Auto-retry when connection returns
+    window.addEventListener('online', () => {
+      window.location.reload();
+    });
+  </script>
+</body>
+</html>

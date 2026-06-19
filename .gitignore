@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Build outputs
+.next/
+out/
+dist/
+build/
+
+# Testing
+coverage/
+playwright-report/
+test-results/
+e2e-pkg/playwright-report/
+
+# Environment variables
+.env
+.env*.local
+.env.production
+!.env.template
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Prisma
+prisma/migrations/*/migration.sql.lock
+
+# Deployment
+.vercel
+
+# Original packages (after merging, these aren't needed)
+*-pkg/
+*.zip
