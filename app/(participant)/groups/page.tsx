@@ -9,7 +9,7 @@ import { getGroupData } from '@/lib/data/queries';
 import { prisma } from '@/lib/db/client';
 import { GroupsClient } from './groups-client';
 
-const POOL_ID = 'pool-propanas-2026';
+const POOL_ID = 'pool-propanas-octavos-2026';
 
 export const dynamic = 'force-dynamic';
 

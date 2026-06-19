@@ -3,7 +3,7 @@ import { requireAuth, isAuthError } from '@/lib/auth';
 import { prisma } from '@/lib/db/client';
 import { lookupFIFAMatrix } from '@/lib/domain/tournament/fifa-matrix';
 
-const POOL_ID = 'pool-propanas-2026';
+const POOL_ID = 'pool-propanas-octavos-2026';
 const THIRD_PLACE_HOSTS = ['1A', '1B', '1D', '1E', '1G', '1I', '1K', '1L'];
 
 // GET: obtener terceros oficiales

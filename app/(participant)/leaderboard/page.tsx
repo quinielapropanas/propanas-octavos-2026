@@ -8,7 +8,7 @@ import { } from '@/lib/supabase/server';
 import { getLeaderboardData } from '@/lib/data/queries';
 import { LeaderboardLive } from './leaderboard-live';
 
-const POOL_ID = 'pool-propanas-2026';
+const POOL_ID = 'pool-propanas-octavos-2026';
 
 export const dynamic = 'force-dynamic';
 

@@ -12,7 +12,7 @@
 import 'server-only';
 import { prisma } from '@/lib/db/client';
 
-const DEFAULT_POOL_ID = 'pool-propanas-2026';
+const DEFAULT_POOL_ID = 'pool-propanas-octavos-2026';
 
 export async function syncUserToPrisma(authUser: {
   id: string;

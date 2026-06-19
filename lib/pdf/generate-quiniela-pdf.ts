@@ -231,7 +231,7 @@ export function generateQuinielaPDF(input: PDFInput) {
   y += 5;
   doc.setFontSize(8);
   doc.setTextColor(100, 100, 100);
-  doc.text(`Total de pronósticos: ${totalPredictions}/104`, margin, y);
+  doc.text(`Total de pronósticos: ${totalPredictions}/32`, margin, y);
   doc.text('ProPanas 2026 — Quiniela del Mundial FIFA 2026', pageWidth - margin, y, { align: 'right' });
 
   // ─── Add page numbers ───

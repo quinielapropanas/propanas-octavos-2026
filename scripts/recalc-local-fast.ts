@@ -21,7 +21,7 @@ import type {
 } from '../lib/domain/types';
 
 const prisma = new PrismaClient();
-const POOL_ID = 'pool-propanas-2026';
+const POOL_ID = 'pool-propanas-octavos-2026';
 
 function fifaMatrixLookup(key: string): Record<string, string> | null {
   const row = lookupFIFAMatrix(key);

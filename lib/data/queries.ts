@@ -91,7 +91,7 @@ export async function getDashboardData(userId: string, poolId: string, entryId?:
     totalPoints: ranking?.totalPoints ?? 0,
     completionPct: entry?.completionPct ?? 0,
     matchesPredicted: predictions,
-    totalMatches: 104,
+    totalMatches: 32,
     entryStatus: (entry?.status ?? 'DRAFT') as EntryStatus,
     nextDeadlineAt: nextDeadline,
     nextMatch: nextMatchRaw ? toMatchBrief(nextMatchRaw) : null,
@@ -469,7 +469,7 @@ export async function getAdminDashboardData(poolId: string): Promise<AdminDashbo
   return {
     poolId,
     matchesPlayed,
-    totalMatches: 104,
+    totalMatches: 32,
     participantCount,
     activeOverrides,
     lastRecalcAt: lastAudit?.createdAt ?? null,

@@ -8,7 +8,7 @@ import { } from '@/lib/supabase/server';
 import { getProfileData } from '@/lib/data/queries';
 import { ProfileForm } from './profile-form';
 
-const POOL_ID = 'pool-propanas-2026';
+const POOL_ID = 'pool-propanas-octavos-2026';
 
 export const dynamic = 'force-dynamic';
 

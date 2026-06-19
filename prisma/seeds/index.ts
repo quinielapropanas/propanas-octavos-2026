@@ -57,10 +57,10 @@ async function main() {
   // 2. Pool
   console.log('2/7 Creating pool...');
   const pool = await prisma.pool.upsert({
-    where: { id: 'pool-propanas-2026' },
+    where: { id: 'pool-propanas-octavos-2026' },
     update: { name: POOL_CONFIG.name, description: POOL_CONFIG.description },
     create: {
-      id: 'pool-propanas-2026',
+      id: 'pool-propanas-octavos-2026',
       name: POOL_CONFIG.name,
       description: POOL_CONFIG.description,
       status: 'DRAFT',

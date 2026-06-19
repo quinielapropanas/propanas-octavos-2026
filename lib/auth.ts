@@ -42,7 +42,7 @@ export async function requireAuth(
   } catch {}
 
   const url = new URL(req.url);
-  const poolId = url.searchParams.get('poolId') ?? 'pool-propanas-2026';
+  const poolId = url.searchParams.get('poolId') ?? 'pool-propanas-octavos-2026';
 
   const membership = await prisma.poolMembership.findUnique({
     where: { poolId_userId: { poolId, userId: user.id } },

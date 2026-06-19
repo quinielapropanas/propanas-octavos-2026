@@ -3,7 +3,7 @@ import { getSessionUser } from '@/lib/supabase/server';
 import { prisma } from '@/lib/db/client';
 import { EquiposClient } from './equipos-client';
 
-const POOL_ID = 'pool-propanas-2026';
+const POOL_ID = 'pool-propanas-octavos-2026';
 
 export const dynamic = 'force-dynamic';
 

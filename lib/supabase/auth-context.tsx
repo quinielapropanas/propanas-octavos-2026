@@ -24,7 +24,7 @@ const AuthContext = createContext<AuthState>({
   user: null,
   displayName: '',
   role: null,
-  poolId: 'pool-propanas-2026',
+  poolId: 'pool-propanas-octavos-2026',
   loading: true,
   signOut: async () => {},
 });
@@ -51,7 +51,7 @@ export function AuthProvider({
     '';
 
   const role = initialRole ?? null;
-  const poolId = 'pool-propanas-2026';
+  const poolId = 'pool-propanas-octavos-2026';
 
   useEffect(() => {
     // If no initial user, fetch from browser session

@@ -8,7 +8,7 @@ import { getSessionUser } from '@/lib/supabase/server';
 import { prisma } from '@/lib/db/client';
 import { ParticipantShell } from './participant-shell';
 
-const POOL_ID = 'pool-propanas-2026';
+const POOL_ID = 'pool-propanas-octavos-2026';
 
 export default async function ParticipantLayout({ children }: { children: React.ReactNode }) {
   const user = await getSessionUser();

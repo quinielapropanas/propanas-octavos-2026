@@ -6,7 +6,7 @@ import { dataProvider, dataPersister } from '../lib/db/data-provider';
 import { fullRebuild } from '../lib/domain/recalculator/recalculator';
 
 const prisma = new PrismaClient();
-const POOL_ID = 'pool-propanas-2026';
+const POOL_ID = 'pool-propanas-octavos-2026';
 
 async function main() {
   console.log('🏟️  ProPanas 2026 — Recálculo completo');

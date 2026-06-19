@@ -53,7 +53,7 @@ export interface DashboardData {
   totalPoints: number;
   completionPct: number;
   matchesPredicted: number;
-  totalMatches: 104;
+  totalMatches: 32;
   entryStatus: EntryStatus;
   nextDeadlineAt: Date | null;
   nextMatch: MatchBrief | null;
@@ -199,7 +199,7 @@ export interface BracketData {
 export interface AdminDashboardData {
   poolId: string;
   matchesPlayed: number;
-  totalMatches: 104;
+  totalMatches: 32;
   participantCount: number;
   activeOverrides: number;
   lastRecalcAt: Date | null;

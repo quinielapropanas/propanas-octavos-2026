@@ -1,65 +1,78 @@
-'use client';
+import { prisma } from '@/lib/db/client';
+import { PageHeader, Card } from '@/components/ui';
 
-import { useState } from 'react';
-import { Card, Badge, PageHeader } from '@/components/ui';
+const POOL_ID = 'pool-propanas-octavos-2026';
 
-// ═══════════════════════════════════════════════════════════
-// Public Fixtures Page — all 104 matches
-// ═══════════════════════════════════════════════════════════
+export const dynamic = 'force-dynamic';
 
-const PHASES = ['Todos', 'Grupos', 'R32', 'R16', 'QF', 'SF', '3er', 'Final'];
+export default async function FixturesPage() {
+  const matches = await prisma.match.findMany({
+    where: { poolId: POOL_ID, phase: { not: 'GROUP' } },
+    include: {
+      homeTeam: { select: { name: true, shortName: true } },
+      awayTeam: { select: { name: true, shortName: true } },
+    },
+    orderBy: { matchNumber: 'asc' },
+  });
 
-const DEMO_FIXTURES = [
-  { num: 1, home: 'México 🇲🇽', away: 'Sudáfrica 🇿🇦', date: 'Jun 11 · 19:00', venue: 'Estadio Azteca', phase: 'Grupos', result: '2-0' },
-  { num: 2, home: 'Rep. Corea 🇰🇷', away: 'Rep. Checa 🇨🇿', date: 'Jun 12 · 02:00', venue: 'Estadio Akron', phase: 'Grupos', result: '1-1' },
-  { num: 3, home: 'Canadá 🇨🇦', away: 'Bosnia 🇧🇦', date: 'Jun 12 · 19:00', venue: 'BMO Field', phase: 'Grupos', result: null },
-  { num: 4, home: 'EE.UU. 🇺🇸', away: 'Paraguay 🇵🇾', date: 'Jun 13 · 01:00', venue: 'SoFi Stadium', phase: 'Grupos', result: null },
-  { num: 73, home: '2A', away: '2B', date: 'Jun 28 · 19:00', venue: 'SoFi Stadium', phase: 'R32', result: null },
-  { num: 104, home: 'W101', away: 'W102', date: 'Jul 19 · 20:00', venue: 'MetLife Stadium', phase: 'Final', result: null },
-];
+  const byPhase: Record<string, typeof matches> = {};
+  for (const m of matches) {
+    const key = m.phase;
+    if (!byPhase[key]) byPhase[key] = [];
+    byPhase[key].push(m);
+  }
 
-export default function FixturesPage() {
-  const [filter, setFilter] = useState('Todos');
+  const phaseLabel: Record<string, string> = {
+    R16: 'Octavos de Final',
+    QF: 'Cuartos de Final',
+    SF: 'Semifinales',
+    THIRD: 'Tercer Lugar',
+    FINAL: 'Final',
+  };
 
-  const filtered = filter === 'Todos' ? DEMO_FIXTURES : DEMO_FIXTURES.filter(f => f.phase === filter);
+  const phaseOrder = ['R16', 'QF', 'SF', 'THIRD', 'FINAL'];
 
   return (
-    <div className="space-y-5">
-      <PageHeader title="Fixture Completo" subtitle="Los 104 partidos del Mundial FIFA 2026" />
+    <div className="space-y-6 p-4 max-w-3xl mx-auto">
+      <PageHeader title="Fixture" subtitle="Los 32 partidos de la fase eliminatoria" />
 
-      <div className="flex gap-1.5 overflow-x-auto pb-1">
-        {PHASES.map(p => (
-          <button key={p} onClick={() => setFilter(p)}
-            className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all
-              ${filter === p ? 'bg-pp-maroon text-pp-gold border border-pp-gold/30'
-                : 'bg-pp-bg-surface text-pp-text-muted border border-pp-border'}`}>
-            {p}
-          </button>
-        ))}
-      </div>
-
-      <div className="space-y-2">
-        {filtered.map(f => (
-          <Card key={f.num} accent={f.result ? 'info' : 'none'}>
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-mono text-pp-text-muted">M{f.num}</span>
-                  <Badge variant={f.result ? 'info' : 'muted'}>{f.phase}</Badge>
-                </div>
-                <div className="text-sm font-semibold mt-1">
-                  {f.home} <span className="text-pp-text-muted mx-1">vs</span> {f.away}
-                </div>
-                <div className="text-[10px] text-pp-text-muted mt-0.5">{f.date} • {f.venue}</div>
-              </div>
-              {f.result && (
-                <div className="text-xl font-black text-pp-gold">{f.result}</div>
-              )}
+      {phaseOrder.map(phase => {
+        const phaseMatches = byPhase[phase];
+        if (!phaseMatches?.length) return null;
+        return (
+          <div key={phase}>
+            <div className="text-xs font-bold text-pp-gold-light tracking-wider mb-3">
+              {phaseLabel[phase] ?? phase}
             </div>
-          </Card>
-        ))}
-      </div>
+            <div className="space-y-2">
+              {phaseMatches.map(m => (
+                <Card key={m.id}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="text-sm font-bold">
+                        {m.homeTeam?.name ?? m.homeOrigin ?? 'TBD'}
+                        <span className="text-pp-text-muted mx-2">vs</span>
+                        {m.awayTeam?.name ?? m.awayOrigin ?? 'TBD'}
+                      </div>
+                      <div className="text-[10px] text-pp-text-muted mt-0.5">
+                        {formatDate(m.scheduledAt)} • {m.venue}
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-mono text-pp-text-muted">M{m.matchNumber}</span>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
 
+function formatDate(d: Date): string {
+  return new Intl.DateTimeFormat('es-MX', {
+    month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  }).format(d);
+}

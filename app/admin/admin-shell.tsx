@@ -10,17 +10,14 @@ import { Sidebar, BottomNav } from '@/components/ui';
 import { createBrowserSupabase } from '@/lib/supabase/clients';
 
 const ADMIN_NAV = [
-  { label: 'Dashboard',   href: '/admin/dashboard', icon: '📋' },
-  { label: 'Resultados',  href: '/admin/results',   icon: '⚽' },
-  { label: 'Bracket',     href: '/admin/bracket',   icon: '🏆' },
-  { label: 'Ranking',     href: '/admin/ranking',   icon: '📊' },
+  { label: 'Dashboard',      href: '/admin/dashboard',      icon: '📋' },
+  { label: 'Setup 8vos',     href: '/admin/setup-r16',      icon: '🎯' },
+  { label: 'Resultados',     href: '/admin/results',        icon: '⚽' },
+  { label: 'Bracket',        href: '/admin/bracket',        icon: '🏆' },
+  { label: 'Ranking',        href: '/admin/ranking',        icon: '📊' },
   { label: 'Participantes',  href: '/admin/participants',   icon: '👥' },
-  { label: 'Terceros',     href: '/admin/best-thirds',   icon: '🥉' },
-  { label: 'Overrides',   href: '/admin/overrides',  icon: '🔧' },
-  { label: 'Goleadores',   href: '/admin/scorers',     icon: '👟' },
-  { label: 'Aprobaciones', href: '/admin/approvals',   icon: '✅' },
-  { label: 'Config',      href: '/admin/config',     icon: '⚙️' },
-  { label: 'Auditoría',   href: '/admin/audit',      icon: '📜' },
+  { label: 'Aprobaciones',   href: '/admin/approvals',      icon: '✅' },
+  { label: 'Config',         href: '/admin/config',         icon: '⚙️' },
 ];
 
 export function AdminShell({

@@ -13,8 +13,6 @@ import { createBrowserSupabase } from '@/lib/supabase/clients';
 
 const NAV_ITEMS = [
   { label: 'Dashboard',  href: '/dashboard',     icon: '🏠' },
-  { label: 'Equipos',    href: '/equipos',        icon: '🌍' },
-  { label: 'Grupos',     href: '/groups',         icon: '⚽' },
   { label: 'Bracket',    href: '/bracket',        icon: '🏆' },
   { label: 'Ranking',    href: '/leaderboard',    icon: '📊' },
 ];
@@ -58,8 +56,6 @@ function ShellContent({
     const active = pathname?.startsWith(item.href) ?? false;
     let disabled = false;
 
-    if (item.href === '/best-thirds' && !groupsComplete) disabled = true;
-    if (item.href === '/bracket' && !thirdsConfirmed) disabled = true;
 
     const href = activeEntryId ? `${item.href}?entry=${activeEntryId}` : item.href;
 

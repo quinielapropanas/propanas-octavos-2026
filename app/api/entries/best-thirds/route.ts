@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 import { prisma } from '@/lib/db/client';
 import { generateParticipantBracket } from '@/lib/domain/bracket-generator';
 
-const POOL_ID = 'pool-propanas-2026';
+const POOL_ID = 'pool-propanas-octavos-2026';
 
 // GET: obtener ranking de terceros calculado
 export async function GET(req: NextRequest) {
