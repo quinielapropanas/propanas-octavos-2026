@@ -48,7 +48,7 @@ let entryId = searchParams?.entry;
 
   const entry = await prisma.entry.findUnique({
     where: { id: entryId },
-    select: { displayName: true, status: true },
+    select: { displayName: true, status: true, completionPct: true },
   });
 
   const entryLocked = entry?.status === 'SUBMITTED' || entry?.status === 'APPROVED';
@@ -60,6 +60,8 @@ let entryId = searchParams?.entry;
       matchSlotMap={matchSlotMap}
       entryId={entryId}
       entryDisplayName={entry?.displayName ?? 'Quiniela'}
+      entryStatus={entry?.status ?? 'DRAFT'}
+      completionPct={entry?.completionPct ?? 0}
     />
   );
 }

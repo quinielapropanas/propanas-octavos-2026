@@ -18,12 +18,14 @@ const NEXT_ROUND: Record<string, BracketSlot['round'] | null> = {
   R16: 'QF', QF: 'SF', SF: 'THIRD', THIRD: 'FINAL', FINAL: null,
 };
 
-export function BracketClient({ initialData, matchSlotMap, entryId, entryDisplayName, entryLocked = false }: {
+export function BracketClient({ initialData, matchSlotMap, entryId, entryDisplayName, entryLocked = false, entryStatus = 'DRAFT', completionPct = 0 }: {
   initialData: BracketData;
   matchSlotMap: Record<string, string>;
   entryId?: string;
   entryDisplayName?: string;
   entryLocked?: boolean;
+  entryStatus?: string;
+  completionPct?: number;
 }) {
   const router = useRouter();
   const [activeRound, setActiveRound] = useState<BracketSlot['round']>('R16');
@@ -168,7 +170,13 @@ export function BracketClient({ initialData, matchSlotMap, entryId, entryDisplay
       {/* Summary view */}
       {showSummary && (
         <>
-          <BracketSummary slots={allSlots} teamNames={teamNames} />
+          <BracketSummary
+            slots={allSlots}
+            teamNames={teamNames}
+            entryId={entryId}
+            entryStatus={entryStatus}
+            completionPct={completionPct}
+          />
           <div className="mt-4">
             <DownloadPDFButton
               entryId={entryId ?? ''}

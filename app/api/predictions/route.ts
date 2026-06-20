@@ -246,7 +246,7 @@ async function updateEntryCompletion(poolId: string, entryId: string) {
   await prisma.entry.update({
     where: { id: entryId },
     data: {
-      completionPct: Math.round((totalPredictions / 32) * 100),
+      completionPct: Math.round((totalPredictions / 16) * 100),
     },
   });
 }

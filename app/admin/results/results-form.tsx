@@ -489,7 +489,7 @@ export function ResultsForm({
               ))}
               <div className="bg-pp-bg-surface rounded-lg p-2 text-center">
                 <div className="text-[10px] text-pp-text-muted">Total</div>
-                <div className="text-lg font-black text-pp-gold">{loadedResults.length}/32</div>
+                <div className="text-lg font-black text-pp-gold">{loadedResults.length}/16</div>
               </div>
             </div>
           </Card>

@@ -1,15 +1,23 @@
 'use client';
 
 import { useState } from 'react';
-import { PageHeader, Card, Badge } from '@/components/ui';
+import { useRouter } from 'next/navigation';
+import { PageHeader, Card, Badge, Button } from '@/components/ui';
 import type { BracketSlot } from '@/lib/data/types';
 
 interface Props {
   slots: BracketSlot[];
-  teamNames: Record<string, string>; // teamId → full name
+  teamNames: Record<string, string>;
+  entryId?: string;
+  entryStatus?: string;
+  completionPct?: number;
 }
 
-export function BracketSummary({ slots, teamNames }: Props) {
+export function BracketSummary({ slots, teamNames, entryId, entryStatus = 'DRAFT', completionPct = 0 }: Props) {
+  const router = useRouter();
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
   const getSlot = (slotId: string) => slots.find(s => s.slotId === slotId);
   const teamName = (id: string | null) => id ? (teamNames[id] ?? '?') : 'TBD';
 
@@ -25,41 +33,59 @@ export function BracketSummary({ slots, teamNames }: Props) {
     return null;
   };
 
-  // Left bracket: R32 1-8 → R16 1-4 → QF 1-2 → SF-01
-  const leftR32 = ['R32-01','R32-03','R32-02','R32-05','R32-04','R32-06','R32-07','R32-08'];
+  // Octavos quiniela: starts at R16, no R32
   const leftR16 = ['R16-01','R16-02','R16-05','R16-06'];
   const leftQF = ['QF-01','QF-02'];
   const leftSF = 'SF-01';
 
-  // Right bracket: R32 9-16 → R16 3-4,7-8 → QF 3-4 → SF-02
-  const rightR32 = ['R32-11','R32-12','R32-09','R32-10','R32-13','R32-15','R32-14','R32-16'];
   const rightR16 = ['R16-03','R16-04','R16-07','R16-08'];
   const rightQF = ['QF-03','QF-04'];
   const rightSF = 'SF-02';
 
+  const isDraft = entryStatus === 'DRAFT';
+  const isSubmitted = entryStatus === 'SUBMITTED';
+  const isApproved = entryStatus === 'APPROVED';
+  const canSubmit = isDraft && completionPct >= 100;
+
+  const handleSubmit = async () => {
+    if (!confirm('¿Estás seguro que deseas enviar tu quiniela? Una vez enviada no podrás hacer cambios.')) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const res = await fetch('/api/entries/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entryId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al enviar');
+      router.refresh();
+    } catch (err: any) {
+      setSubmitError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <PageHeader title="Resumen del Bracket" subtitle="Vista completa de tu pronóstico eliminatorio" />
+      <PageHeader title="Resumen del Bracket" subtitle="Vista completa de tu pronóstico de octavos" />
 
       {/* Desktop: full bracket */}
       <div className="hidden lg:block overflow-x-auto">
-        <div className="min-w-[1100px] flex items-start gap-0">
+        <div className="min-w-[900px] flex items-start gap-0">
           {/* LEFT BRACKET */}
           <div className="flex-1">
             <div className="text-center text-[10px] text-pp-gold-light font-bold tracking-wider mb-3">LLAVE A</div>
-            <BracketColumn slots={leftR32.map(getSlot)} teamNames={teamNames} winner={winner} label="Dieciseisavos" />
-          </div>
-          <div className="w-40">
-            <div className="h-6" />
-            <BracketColumn slots={leftR16.map(getSlot)} teamNames={teamNames} winner={winner} label="Octavos" spacing="lg" />
+            <BracketColumn slots={leftR16.map(getSlot)} teamNames={teamNames} winner={winner} label="Octavos" />
           </div>
           <div className="w-36">
             <div className="h-6" />
-            <BracketColumn slots={leftQF.map(getSlot)} teamNames={teamNames} winner={winner} label="Cuartos" spacing="xl" />
+            <BracketColumn slots={leftQF.map(getSlot)} teamNames={teamNames} winner={winner} label="Cuartos" spacing="lg" />
           </div>
           <div className="w-36">
             <div className="h-6" />
-            <BracketColumn slots={[getSlot(leftSF)]} teamNames={teamNames} winner={winner} label="Semi" spacing="xxl" />
+            <BracketColumn slots={[getSlot(leftSF)]} teamNames={teamNames} winner={winner} label="Semi" spacing="xl" />
           </div>
 
           {/* FINAL + 3RD */}
@@ -72,48 +98,34 @@ export function BracketSummary({ slots, teamNames }: Props) {
           {/* RIGHT BRACKET */}
           <div className="w-36">
             <div className="h-6" />
-            <BracketColumn slots={[getSlot(rightSF)]} teamNames={teamNames} winner={winner} label="Semi" spacing="xxl" />
+            <BracketColumn slots={[getSlot(rightSF)]} teamNames={teamNames} winner={winner} label="Semi" spacing="xl" />
           </div>
           <div className="w-36">
             <div className="h-6" />
-            <BracketColumn slots={rightQF.map(getSlot)} teamNames={teamNames} winner={winner} label="Cuartos" spacing="xl" />
-          </div>
-          <div className="w-40">
-            <div className="h-6" />
-            <BracketColumn slots={rightR16.map(getSlot)} teamNames={teamNames} winner={winner} label="Octavos" spacing="lg" />
+            <BracketColumn slots={rightQF.map(getSlot)} teamNames={teamNames} winner={winner} label="Cuartos" spacing="lg" />
           </div>
           <div className="flex-1">
             <div className="text-center text-[10px] text-pp-gold-light font-bold tracking-wider mb-3">LLAVE B</div>
-            <BracketColumn slots={rightR32.map(getSlot)} teamNames={teamNames} winner={winner} label="Dieciseisavos" />
+            <BracketColumn slots={rightR16.map(getSlot)} teamNames={teamNames} winner={winner} label="Octavos" />
           </div>
         </div>
       </div>
 
-      {/* Mobile: stacked view */}
+      {/* Mobile: stacked */}
       <div className="lg:hidden space-y-6">
-        {/* Final */}
         <div>
           <div className="text-center text-xs font-bold text-pp-gold tracking-wider mb-2">⭐ FINAL</div>
           <MatchBox slot={getSlot('F-01')} teamNames={teamNames} winner={winner} highlight="gold" />
         </div>
 
-        {/* 3rd */}
         <div>
           <div className="text-center text-[10px] font-bold text-pp-text-muted tracking-wider mb-2">3ER LUGAR</div>
           <MatchBox slot={getSlot('3RD-01')} teamNames={teamNames} winner={winner} highlight="bronze" />
         </div>
 
-        {/* Semis */}
         <RoundSection label="Semifinales" slots={[getSlot(leftSF), getSlot(rightSF)]} teamNames={teamNames} winner={winner} />
-
-        {/* Quarters */}
         <RoundSection label="Cuartos de Final" slots={[...leftQF, ...rightQF].map(getSlot)} teamNames={teamNames} winner={winner} />
-
-        {/* R16 */}
         <RoundSection label="Octavos de Final" slots={[...leftR16, ...rightR16].map(getSlot)} teamNames={teamNames} winner={winner} />
-
-        {/* R32 */}
-        <RoundSection label="Dieciseisavos" slots={[...leftR32, ...rightR32].map(getSlot)} teamNames={teamNames} winner={winner} />
       </div>
 
       {/* Champion banner */}
@@ -130,11 +142,64 @@ export function BracketSummary({ slots, teamNames }: Props) {
           </div>
         );
       })()}
+
+      {/* Status & Submit */}
+      <Card accent={isApproved ? 'success' : isSubmitted ? 'info' : 'none'}>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="text-xs font-bold text-pp-gold-light tracking-wider">ESTADO DE LA QUINIELA</div>
+            {isDraft && <Badge variant="warning">Borrador</Badge>}
+            {isSubmitted && <Badge variant="info">Enviada — Pendiente</Badge>}
+            {isApproved && <Badge variant="success">Aprobada ✓</Badge>}
+          </div>
+
+          {isDraft && !canSubmit && (
+            <div className="text-xs text-pp-text-muted">
+              Completa tu quiniela al 100% para poder enviarla. Progreso: {completionPct}%
+            </div>
+          )}
+
+          {canSubmit && (
+            <div className="text-xs text-pp-success">
+              ¡Tu quiniela está completa! Envíala para que sea revisada y aprobada.
+            </div>
+          )}
+
+          {isSubmitted && (
+            <div className="text-xs text-pp-text-muted">
+              Tu quiniela está pendiente de aprobación por el administrador.
+            </div>
+          )}
+
+          {isApproved && (
+            <div className="text-xs text-pp-success">
+              Tu quiniela ha sido aprobada y está participando oficialmente.
+            </div>
+          )}
+
+          {submitError && (
+            <div className="text-xs text-pp-danger bg-pp-danger/10 p-2 rounded">{submitError}</div>
+          )}
+
+          {isDraft && (
+            <button
+              onClick={handleSubmit}
+              disabled={!canSubmit || submitting}
+              className={`w-full py-3 rounded-xl text-sm font-bold transition-all
+                ${canSubmit
+                  ? 'bg-green-600 text-white hover:bg-green-700 shadow-lg'
+                  : 'bg-pp-bg-surface text-pp-text-muted border border-pp-border cursor-not-allowed opacity-50'}`}
+            >
+              {submitting ? 'Enviando...' : canSubmit ? '✓ Enviar Quiniela' : '🔒 Completa tu quiniela para enviar'}
+            </button>
+          )}
+        </div>
+      </Card>
     </div>
   );
 }
 
-// ─── Sub-components ──────────────────────────────────────
+// Sub-components
 
 function BracketColumn({ slots, teamNames, winner, label, spacing = 'sm' }: {
   slots: (BracketSlot | undefined)[];
