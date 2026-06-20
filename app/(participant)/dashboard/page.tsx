@@ -121,14 +121,9 @@ export default async function DashboardPage({
       )}
 	  
       <div className="space-y-3">
-        <Link href={`/groups?${entryId ? `entry=${entryId}` : ''}`} className="block">
+        <Link href={`/bracket?${entryId ? `entry=${entryId}` : ''}`} className="block">
           <Button variant="primary" className="w-full" size="lg">
             {data.matchesPredicted === 0 ? 'Empezar pronósticos' : 'Continuar pronósticos'} →
-          </Button>
-        </Link>
-        <Link href="/leaderboard" className="block">
-          <Button variant="secondary" className="w-full">
-            Ver ranking
           </Button>
         </Link>
       </div>

@@ -12,10 +12,10 @@ const ROUND_LABELS: Record<BracketSlot['round'], string> = {
   R32: 'Dieciseisavos', R16: 'Octavos', QF: 'Cuartos', SF: 'Semis',
   THIRD: '3er Lugar', FINAL: 'Final',
 };
-const ROUND_ORDER: BracketSlot['round'][] = ['R32', 'R16', 'QF', 'SF', 'THIRD', 'FINAL'];
+const ROUND_ORDER: BracketSlot['round'][] = ['R16', 'QF', 'SF', 'THIRD', 'FINAL'];
 
 const NEXT_ROUND: Record<string, BracketSlot['round'] | null> = {
-  R32: 'R16', R16: 'QF', QF: 'SF', SF: 'THIRD', THIRD: 'FINAL', FINAL: null,
+  R16: 'QF', QF: 'SF', SF: 'THIRD', THIRD: 'FINAL', FINAL: null,
 };
 
 export function BracketClient({ initialData, matchSlotMap, entryId, entryDisplayName, entryLocked = false }: {
@@ -26,7 +26,7 @@ export function BracketClient({ initialData, matchSlotMap, entryId, entryDisplay
   entryLocked?: boolean;
 }) {
   const router = useRouter();
-  const [activeRound, setActiveRound] = useState<BracketSlot['round']>('R32');
+  const [activeRound, setActiveRound] = useState<BracketSlot['round']>('R16');
   const [viewMode, setViewMode] = useState<'predicted' | 'official'>('predicted');
   const [savingSlot, setSavingSlot] = useState<string | null>(null);
   const [savedSlots, setSavedSlots] = useState<Set<string>>(new Set());
@@ -59,7 +59,7 @@ export function BracketClient({ initialData, matchSlotMap, entryId, entryDisplay
     if (phaseComplete || recalculating) return;
     
     const ROUND_SLOT_COUNTS: Record<string, number> = {
-      R32: 16, R16: 8, QF: 4, SF: 2, THIRD: 1, FINAL: 1,
+      R16: 8, QF: 4, SF: 2, THIRD: 1, FINAL: 1,
     };
     const expected = ROUND_SLOT_COUNTS[activeRound] ?? 0;
     const roundSlotsWithTeams = slots.filter(s => s.round === activeRound && s.homeTeam && s.awayTeam);

@@ -19,7 +19,7 @@ export default async function BracketPage({
   const user = await getSessionUser();
   if (!user) redirect('/login');
 
-  let entryId = searchParams?.entry;
+let entryId = searchParams?.entry;
   if (!entryId) {
     const firstEntry = await prisma.entry.findFirst({
       where: { poolId: POOL_ID, userId: user.id },
@@ -27,6 +27,12 @@ export default async function BracketPage({
       select: { id: true },
     });
     entryId = firstEntry?.id;
+  }
+
+  // Auto-generate participant R16 bracket from official setup if not exists
+  if (entryId) {
+    const { generateOctavosParticipantBracket } = await import('@/lib/domain/bracket-generator-octavos');
+    await generateOctavosParticipantBracket(user.id, entryId);
   }
 
   const data = await getBracketData(user.id, POOL_ID, entryId);
