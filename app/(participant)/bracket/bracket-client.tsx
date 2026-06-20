@@ -147,24 +147,39 @@ export function BracketClient({ initialData, matchSlotMap, entryId, entryDisplay
         </button>
       )}
       {/* Reminder to submit */}
-      {bracketComplete && !entryLocked && (
+      {bracketComplete && !entryLocked && entryStatus === 'DRAFT' && (
         <div className="bg-gradient-to-br from-green-600/20 to-green-800/20 border-2 border-green-500/40 rounded-xl p-6 text-center space-y-3">
           <div className="text-2xl">📩</div>
           <div className="text-lg font-black text-green-400">
             ¡Tu quiniela está completa!
           </div>
           <div className="text-sm text-white font-semibold">
-            Ahora debe enviar esta Quiniela. Vaya al Dashboard, coloque los detalles de su goleador y presione el botón verde &quot;Enviar Quiniela&quot;.
+            Ahora debe enviar esta Quiniela. Presione el botón verde &quot;Enviar Quiniela&quot;.
           </div>
           
-            <a href={`/dashboard?entry=${entryId ?? ''}`}
+          <button
+            onClick={async () => {
+              if (!confirm('¿Estás seguro que deseas enviar tu quiniela? Una vez enviada no podrás hacer cambios.')) return;
+              try {
+                const res = await fetch('/api/entries/submit', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ entryId }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Error al enviar');
+                router.refresh();
+              } catch (err: any) {
+                setError(err.message);
+              }
+            }}
             className="inline-block px-6 py-3 rounded-xl text-sm font-bold
               bg-green-600 text-white hover:bg-green-700 transition-all shadow-lg"
           >
-            Ir al Dashboard →
-          </a>
+            Enviar Quiniela
+          </button>
         </div>
-      )}	  
+      )}
 	  
 
       {/* Summary view */}
