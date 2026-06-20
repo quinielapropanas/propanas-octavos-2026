@@ -54,7 +54,6 @@ export default async function DashboardPage({
  // Scorer is locked only if: entry has a scorer already OR deadline passed
   // If entry is submitted/approved but has no scorer, allow editing
   const entryLocked = ['LOCKED', 'SUBMITTED', 'APPROVED'].includes(data.entryStatus);
-  const scorerLocked = entryLocked && (topScorer.playerName.trim() !== '' && topScorer.goals > 0);
 
   return (
     <div className="space-y-6">
@@ -91,16 +90,6 @@ export default async function DashboardPage({
         </Card>
       </div>
 
-      {/* Top scorer prediction per entry */}
-      {entryId && (
-        <TopScorerCard
-          entryId={entryId}
-          playerName={topScorer.playerName}
-          goals={topScorer.goals}
-          entryLocked={scorerLocked}
-        />
-      )}
-
       {data.nextMatch && (
         <Card accent="info">
           <div className="text-[10px] text-pp-info tracking-wider mb-2">PRÓXIMO PARTIDO</div>
@@ -120,32 +109,7 @@ export default async function DashboardPage({
         </Card>
       )}
 
-      <div>
-        <div className="text-xs font-bold text-pp-gold-light tracking-wider mb-3">GRUPOS</div>
-        <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-          {'ABCDEFGHIJKL'.split('').map((g) => {
-            const comp = data.groupCompletion[g];
-            const complete = comp.predicted === comp.total;
-            return (
-              <Link
-                key={g}
-                href={`/groups?group=${g}${entryParam}`}
-                className={`
-                  flex flex-col items-center p-3 rounded-lg border transition-all duration-150
-                  ${complete
-                    ? 'bg-pp-success-dim/30 border-pp-success/20 hover:border-pp-success/50'
-                    : 'bg-pp-bg-card border-pp-border hover:border-pp-border-light'}
-                `}
-              >
-                <span className="text-sm font-bold">{g}</span>
-                <span className="text-[9px] text-pp-text-muted mt-0.5">
-                  {comp.predicted}/{comp.total}
-                </span>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
+      
 
 	{/* Submit entry */}
       {entryId && (
