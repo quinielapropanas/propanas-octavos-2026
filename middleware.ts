@@ -11,7 +11,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 
 const PUBLIC_PATHS = ['/login', '/fixtures', '/teams', '/'];
-const API_PUBLIC_PATHS = ['/api/leaderboard'];
+const API_PUBLIC_PATHS = ['/api/leaderboard', '/api/pool/deadline'];
 
 export async function middleware(req: NextRequest) {
   let response = NextResponse.next({ request: req });
