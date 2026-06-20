@@ -27,7 +27,6 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Also update the match
     await prisma.match.updateMany({
       where: { poolId: POOL_ID, slotId },
       data: { homeTeamId: home, awayTeamId: away },
