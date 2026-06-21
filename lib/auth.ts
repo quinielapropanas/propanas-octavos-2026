@@ -100,12 +100,14 @@ export async function isMatchLocked(poolId: string, matchId: string): Promise<bo
   return false;
 }
 
-export async function isEntryLocked(poolId: string, userId: string): Promise<boolean> {
-  const entry = await prisma.entry.findFirst({
-    where: { poolId, userId },
-    orderBy: { entryNumber: 'asc' },
-  });
-  if (entry?.status === 'LOCKED') return true;
+export async function isEntryLocked(poolId: string, userId: string, entryId?: string): Promise<boolean> {
+  // If specific entryId provided, check only that one
+  if (entryId) {
+    const entry = await prisma.entry.findUnique({ where: { id: entryId } });
+    if (entry?.status === 'LOCKED' || entry?.status === 'SUBMITTED' || entry?.status === 'APPROVED') {
+      return true;
+    }
+  }
 
   // Check global deadline
   const globalDeadline = await prisma.poolDeadline.findFirst({

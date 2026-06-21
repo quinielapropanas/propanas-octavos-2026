@@ -45,7 +45,7 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: 'matchId, homeGoals, awayGoals required' }, { status: 400 });
   }
 
-  if (await isEntryLocked(auth.poolId, auth.userId)) {
+  if (await isEntryLocked(auth.poolId, auth.userId, requestEntryId)) {
     return NextResponse.json({ error: 'Your entry is locked — no edits allowed' }, { status: 403 });
   }
 
