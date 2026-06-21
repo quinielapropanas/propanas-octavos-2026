@@ -219,18 +219,59 @@ if (match.phase !== 'GROUP') {
       }
     }
 
-    // Advance bracket for ALL remaining rounds
-    let totalSlotsCreated = 0;
-    let lastRound = null;
-    for (let i = 0; i < 5; i++) {
-      const result = await advanceBracketRound(auth.poolId, auth.userId, entry.id);
-      if (!result.advanced) break;
-      totalSlotsCreated += result.slotsCreated ?? 0;
-      lastRound = result.round;
+    // Auto-propagate winners to next rounds
+    const allParticipantBracket = await prisma.bracketSlot.findMany({
+      where: { poolId: auth.poolId, contextType: 'PARTICIPANT', contextKey: entry.id },
+    });
+    const allKnockoutMatches = await prisma.match.findMany({
+      where: { poolId: auth.poolId, phase: { not: 'GROUP' } },
+    });
+    const allKnockoutPredictions = await prisma.prediction.findMany({
+      where: { poolId: auth.poolId, entryId: entry.id, status: 'VALID', homeGoals: { not: null } },
+    });
+
+    const matchBySlot = new Map<string, string>();
+    for (const m of allKnockoutMatches) {
+      if (m.slotId) matchBySlot.set(m.slotId, m.id);
     }
-    if (lastRound) {
-      bracketUpdate = { type: 'round_advanced', round: lastRound, slotsCreated: totalSlotsCreated };
+
+    const knockoutResults = new Map();
+    for (const p of allKnockoutPredictions) {
+      knockoutResults.set(p.matchId, {
+        matchId: p.matchId, homeGoals: p.homeGoals, awayGoals: p.awayGoals,
+        homePenalties: p.homePenalties, awayPenalties: p.awayPenalties,
+      });
     }
+
+    const { propagateWinners } = await import('@/lib/domain/tournament/bracket-resolver');
+    const r16Slots = allParticipantBracket
+      .filter(s => s.round === 'R16')
+      .map(s => ({
+        slotId: s.slotId, round: s.round as any,
+        homeTeamId: s.homeTeamId, awayTeamId: s.awayTeamId,
+        winnerTeamId: null, loserTeamId: null,
+      }));
+
+    const propagated = propagateWinners(r16Slots, knockoutResults, matchBySlot);
+
+    // Save all propagated slots (skip R16 which already exist)
+    for (const slot of propagated) {
+      if (slot.round === 'R16') continue;
+      await prisma.bracketSlot.upsert({
+        where: { poolId_contextKey_slotId: { poolId: auth.poolId, contextKey: entry.id, slotId: slot.slotId } },
+        update: {
+          homeTeamId: slot.homeTeamId, awayTeamId: slot.awayTeamId,
+          round: slot.round as any, contextType: 'PARTICIPANT',
+        },
+        create: {
+          poolId: auth.poolId, contextType: 'PARTICIPANT', contextKey: entry.id,
+          slotId: slot.slotId, round: slot.round as any,
+          homeTeamId: slot.homeTeamId, awayTeamId: slot.awayTeamId,
+        },
+      });
+    }
+
+    bracketUpdate = { type: 'round_advanced', round: 'auto', slotsCreated: propagated.length };
   }
 
   return NextResponse.json({ success: true, prediction, bracketUpdate });
