@@ -32,6 +32,7 @@ export async function GET(req: NextRequest) {
 // ─── PUT ─────────────────────────────────────────────────
 
 export async function PUT(req: NextRequest) {
+  try {
   const auth = await requireAuth(req);
   if (isAuthError(auth)) return auth;
 
@@ -275,6 +276,10 @@ if (match.phase !== 'GROUP') {
   }
 
   return NextResponse.json({ success: true, prediction, bracketUpdate });
+  } catch (err: any) {
+    console.error('[predictions PUT] ERROR:', err?.message, err?.stack);
+    return NextResponse.json({ error: err?.message ?? 'Unknown error' }, { status: 500 });
+  }
 }
 
 // ─── Helpers ─────────────────────────────────────────────
