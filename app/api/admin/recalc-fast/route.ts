@@ -6,27 +6,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, isAuthError } from '@/lib/auth';
 import { prisma } from '@/lib/db/client';
-import { calculateGroupStandings } from '@/lib/domain/tournament/group-calculator';
-import { rankBestThirds } from '@/lib/domain/tournament/best-thirds';
-import { resolveR32Slots, propagateWinners } from '@/lib/domain/tournament/bracket-resolver';
+import { propagateWinners } from '@/lib/domain/tournament/bracket-resolver';
 import { evaluateAllConcepts, buildRanking } from '@/lib/domain/scoring/score-evaluator';
-import { lookupFIFAMatrix } from '@/lib/domain/tournament/fifa-matrix';
 import type {
-  MatchData, MatchResult, GroupStandingResult,
-  BracketSlotData, PredictionInput, TeamData,
-  ScoringConfig, ScoreBreakdownResult,
+  MatchData, MatchResult, BracketSlotData, PredictionInput, TeamData,
+  ScoringConfig, ScoreBreakdownResult, GroupStandingResult,
 } from '@/lib/domain/types';
 
 const POOL_ID = 'pool-propanas-octavos-2026';
-
-function fifaMatrixLookup(key: string): Record<string, string> | null {
-  const row = lookupFIFAMatrix(key);
-  if (!row) return null;
-  const hosts = ['1A', '1B', '1D', '1E', '1G', '1I', '1K', '1L'];
-  const result: Record<string, string> = {};
-  hosts.forEach((host, i) => { result[host] = row[i]; });
-  return result;
-}
 
 export async function POST(req: NextRequest) {
   const auth = await requireAuth(req, 'ADMIN');
@@ -35,7 +22,6 @@ export async function POST(req: NextRequest) {
   const start = Date.now();
 
   try {
-    // ── Load all data in parallel ──
     const [
       poolConfig, teamsRaw, matchesRaw, officialResultsRaw,
       officialBracketRaw, allEntries, allPredictionsRaw, behaviorFlags,
@@ -62,16 +48,14 @@ export async function POST(req: NextRequest) {
     const adminIds = adminMembers.map(m => m.userId);
     const entries = allEntries.filter(e => !adminIds.includes(e.userId));
 
-    // ── Build in-memory structures ──
     const teams: TeamData[] = teamsRaw.map(t => ({
       id: t.id, name: t.name, shortName: t.shortName,
-     groupLetter: t.groupLetter ?? '', flagUrl: (t as any).flagAssetKey ?? null,
+      groupLetter: t.groupLetter ?? '', flagUrl: (t as any).flagAssetKey ?? null,
       fifaRanking: t.fifaRanking,
     })) as any;
 
     const allMatches: MatchData[] = matchesRaw.map(m => ({
-	  parentSlot1: null,
-      parentSlot2: null,
+      parentSlot1: null, parentSlot2: null,
       id: m.id, matchNumber: m.matchNumber, phase: m.phase,
       groupLetter: m.groupLetter, slotId: m.slotId,
       homeTeamId: m.homeTeamId, awayTeamId: m.awayTeamId,
@@ -103,64 +87,67 @@ export async function POST(req: NextRequest) {
       if (p.homeGoals == null) continue;
       if (!predictionsByEntry.has(p.entryId)) predictionsByEntry.set(p.entryId, new Map());
       predictionsByEntry.get(p.entryId)!.set(p.matchId, {
-		matchId: p.matchId,
+        matchId: p.matchId,
         homeGoals: p.homeGoals, awayGoals: p.awayGoals!,
         homePenalties: p.homePenalties, awayPenalties: p.awayPenalties,
       });
     }
-
-    // ── Calculate official standings & bracket ──
-    const officialStandings: GroupStandingResult[] = [];
-    for (const g of 'ABCDEFGHIJKL'.split('')) {
-      officialStandings.push(calculateGroupStandings(g, teams, allMatches, officialResults));
-    }
-
-    const officialBestThirds = rankBestThirds(officialStandings);
 
     const matchBySlot = new Map<string, string>();
     for (const m of allMatches) {
       if (m.phase !== 'GROUP') matchBySlot.set(m.slotId, m.id);
     }
 
-    const adminR32: BracketSlotData[] = officialBracketRaw
-      .filter(s => s.round === 'R32' && s.homeTeamId && s.awayTeamId)
+    // ── Build official bracket (R16 as base + propagate) ──
+    const adminR16: BracketSlotData[] = officialBracketRaw
+      .filter(s => s.round === 'R16' && s.homeTeamId && s.awayTeamId)
       .map(s => ({
         slotId: s.slotId, round: s.round as any,
         homeTeamId: s.homeTeamId, awayTeamId: s.awayTeamId,
         winnerTeamId: null, loserTeamId: null,
       }));
 
-    let officialBracketSlots: BracketSlotData[] = [];
-    if (adminR32.length >= 16) {
-      officialBracketSlots = propagateWinners(adminR32, officialResults, matchBySlot);
-    } else {
-      const r32 = resolveR32Slots(officialStandings, officialBestThirds, fifaMatrixLookup);
-      officialBracketSlots = propagateWinners(r32, officialResults, matchBySlot);
+    const officialBracketSlots = propagateWinners(adminR16, officialResults, matchBySlot);
+
+    // Persist propagated official bracket back to DB
+    for (const slot of officialBracketSlots) {
+      if (slot.round === 'R16') continue; // R16 already exists, skip
+      await prisma.bracketSlot.upsert({
+        where: { poolId_contextKey_slotId: { poolId: POOL_ID, contextKey: 'OFFICIAL', slotId: slot.slotId } },
+        update: {
+          homeTeamId: slot.homeTeamId, awayTeamId: slot.awayTeamId,
+          round: slot.round as any, contextType: 'OFFICIAL',
+        },
+        create: {
+          poolId: POOL_ID, contextType: 'OFFICIAL', contextKey: 'OFFICIAL',
+          slotId: slot.slotId, round: slot.round as any,
+          homeTeamId: slot.homeTeamId, awayTeamId: slot.awayTeamId,
+        },
+      });
+    }
+    // Also update R16 winners
+    for (const slot of officialBracketSlots.filter(s => s.round === 'R16')) {
+      await prisma.bracketSlot.update({
+        where: { poolId_contextKey_slotId: { poolId: POOL_ID, contextKey: 'OFFICIAL', slotId: slot.slotId } },
+        data: { winnerTeamId: slot.winnerTeamId, loserTeamId: slot.loserTeamId },
+      });
     }
 
-    // ── Score all participants in memory ──
+    // ── Score participants ──
     const allBreakdowns: ScoreBreakdownResult[] = [];
 
     for (const entry of entries) {
       const predictions = predictionsByEntry.get(entry.id);
       if (!predictions || predictions.size === 0) continue;
 
-      const participantStandings: GroupStandingResult[] = [];
-      for (const g of 'ABCDEFGHIJKL'.split('')) {
-        const predResults = new Map<string, MatchResult>();
-        for (const m of allMatches.filter(mm => mm.groupLetter === g && mm.phase === 'GROUP')) {
-          const pred = predictions.get(m.id);
-          if (pred) {
-            predResults.set(m.id, {
-              matchId: m.id, homeGoals: pred.homeGoals, awayGoals: pred.awayGoals,
-            });
-          }
-        }
-        participantStandings.push(calculateGroupStandings(g, teams, allMatches, predResults));
-      }
-
-      const participantThirds = rankBestThirds(participantStandings);
-      const participantR32 = resolveR32Slots(participantStandings, participantThirds, fifaMatrixLookup);
+      // Get participant's R16 (copy from official)
+      const participantR16: BracketSlotData[] = officialBracketRaw
+        .filter(s => s.round === 'R16' && s.homeTeamId && s.awayTeamId)
+        .map(s => ({
+          slotId: s.slotId, round: s.round as any,
+          homeTeamId: s.homeTeamId, awayTeamId: s.awayTeamId,
+          winnerTeamId: null, loserTeamId: null,
+        }));
 
       const participantKnockoutResults = new Map<string, MatchResult>();
       for (const m of allMatches.filter(mm => mm.phase !== 'GROUP')) {
@@ -172,15 +159,15 @@ export async function POST(req: NextRequest) {
           });
         }
       }
-      const participantBracket = propagateWinners(participantR32, participantKnockoutResults, matchBySlot);
+      const participantBracket = propagateWinners(participantR16, participantKnockoutResults, matchBySlot);
 
       const breakdown = evaluateAllConcepts({
         userId: entry.id, config, predictions,
-        participantGroupStandings: participantStandings,
+        participantGroupStandings: [],
         participantBracketSlots: participantBracket,
         participantTopScorer: null,
         officialResults,
-        officialGroupStandings: officialStandings,
+        officialGroupStandings: [],
         officialBracketSlots,
         actualTopScorer: null,
         actualGoalAverage: null,
@@ -189,7 +176,7 @@ export async function POST(req: NextRequest) {
       allBreakdowns.push(breakdown);
     }
 
-    // ── Batch persist ──
+    // ── Persist scores and rankings ──
     const BATCH = 10;
     for (let i = 0; i < allBreakdowns.length; i += BATCH) {
       const batch = allBreakdowns.slice(i, i + BATCH);
@@ -212,7 +199,6 @@ export async function POST(req: NextRequest) {
       }));
     }
 
-    // Build and persist rankings
     const entryNames = new Map(entries.map(e => [e.id, e.displayName ?? '']));
     const rankings = buildRanking(allBreakdowns, entryNames);
     await prisma.ranking.deleteMany({ where: { poolId: POOL_ID } });
