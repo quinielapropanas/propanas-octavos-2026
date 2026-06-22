@@ -125,6 +125,21 @@ export async function POST(req: NextRequest) {
         },
       });
     }
+	
+	// Also update matches table with team assignments
+    for (const slot of officialBracketSlots) {
+      if (slot.round === 'R16') continue;
+      if (slot.homeTeamId && slot.awayTeamId) {
+        await prisma.match.updateMany({
+          where: { poolId: POOL_ID, slotId: slot.slotId },
+          data: {
+            homeTeamId: slot.homeTeamId,
+            awayTeamId: slot.awayTeamId,
+          },
+        });
+      }
+    }
+	
     // Also update R16 winners
     for (const slot of officialBracketSlots.filter(s => s.round === 'R16')) {
       await prisma.bracketSlot.update({
