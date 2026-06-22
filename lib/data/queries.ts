@@ -485,9 +485,9 @@ export async function getAdminDashboardData(poolId: string): Promise<AdminDashbo
 
 export async function getPendingMatches(poolId: string): Promise<PendingMatchRow[]> {
   // Determine which phase to show next
-  const phases = ['GROUP', 'R32', 'R16', 'QF', 'SF', 'THIRD', 'FINAL'] as const;
+  const phases = ['R16', 'QF', 'SF', 'THIRD', 'FINAL'] as const;
   
-  let currentPhase = 'GROUP';
+  let currentPhase = 'R16';
   
   for (const phase of phases) {
     const totalInPhase = await prisma.match.count({
