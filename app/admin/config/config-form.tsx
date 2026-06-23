@@ -193,10 +193,38 @@ export function ConfigForm({
         </Card>
       </div>
 
-      <Button variant="primary" className="w-full" size="lg"
+     <Button variant="primary" className="w-full" size="lg"
         disabled={!!exclusionError} loading={saving} onClick={handleSave}>
         Guardar configuración
       </Button>
+
+      <Card>
+        <div className="space-y-3">
+          <div className="text-xs font-bold text-red-400 tracking-wider">⚠️ ZONA PELIGROSA</div>
+          <div className="text-[10px] text-pp-text-muted">
+            Este botón borrará todos los resultados oficiales, rankings y bracket oficial (excepto R16 inicial).
+          </div>
+          <button
+            onClick={async () => {
+              if (!confirm('⚠️ ¿Estás seguro? Esto borrará TODOS los resultados oficiales, rankings y bracket propagado. Esta acción NO se puede deshacer.')) return;
+              if (!confirm('Confirma una segunda vez. ¿Continuar con el reset?')) return;
+              try {
+                const res = await fetch('/api/admin/reset-results', { method: 'POST' });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Error');
+                alert('✓ Resultados reseteados correctamente');
+                window.location.reload();
+              } catch (err: any) {
+                alert('Error: ' + err.message);
+              }
+            }}
+            className="w-full py-3 rounded-xl text-sm font-bold transition-all
+              bg-red-600 text-white hover:bg-red-700 shadow-lg"
+          >
+            🗑️ Reset Results
+          </button>
+        </div>
+      </Card>
     </div>
   );
 }
