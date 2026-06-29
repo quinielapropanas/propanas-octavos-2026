@@ -225,6 +225,33 @@ export function ConfigForm({
           </button>
         </div>
       </Card>
+	  <Card>
+        <div className="space-y-3">
+          <div className="text-xs font-bold text-red-400 tracking-wider">⚠️ RESET TOTAL</div>
+          <div className="text-[10px] text-pp-text-muted">
+            Este botón borrará TODO: usuarios (excepto admin), quinielas, predicciones, resultados, rankings y setup de R16. La quiniela quedará en estado inicial.
+          </div>
+          <button
+            onClick={async () => {
+              if (!confirm('⚠️ ¿Estás seguro? Esto borrará TODOS los usuarios (excepto admins), quinielas, predicciones, resultados, rankings y setup R16. Esta acción NO se puede deshacer.')) return;
+              if (!confirm('Confirma una segunda vez. ¿Continuar con el reset TOTAL?')) return;
+              try {
+                const res = await fetch('/api/admin/reset-total', { method: 'POST' });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Error');
+                alert('✓ Sistema reseteado a estado inicial');
+                window.location.reload();
+              } catch (err: any) {
+                alert('Error: ' + err.message);
+              }
+            }}
+            className="w-full py-3 rounded-xl text-sm font-bold transition-all
+              bg-red-700 text-white hover:bg-red-800 shadow-lg"
+          >
+            🔥 Reset Total
+          </button>
+        </div>
+      </Card>
     </div>
   );
 }
