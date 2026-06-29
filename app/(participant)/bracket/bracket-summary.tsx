@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageHeader, Card, Badge, Button } from '@/components/ui';
 import type { BracketSlot } from '@/lib/data/types';
+import { BracketDisplay } from '@/app/admin/bracket/bracket-display';
 
 interface Props {
   slots: BracketSlot[];
@@ -34,11 +35,11 @@ export function BracketSummary({ slots, teamNames, entryId, entryStatus = 'DRAFT
   };
 
   // Octavos quiniela: starts at R16, no R32
-  const leftR16 = ['R16-01','R16-02','R16-05','R16-06'];
+  const leftR16 = ['R16-02','R16-01','R16-06','R16-05'];
   const leftQF = ['QF-01','QF-02'];
   const leftSF = 'SF-01';
 
-  const rightR16 = ['R16-03','R16-04','R16-07','R16-08'];
+  const rightR16 = ['R16-03','R16-04','R16-08','R16-07'];
   const rightQF = ['QF-03','QF-04'];
   const rightSF = 'SF-02';
 
@@ -72,43 +73,8 @@ export function BracketSummary({ slots, teamNames, entryId, entryStatus = 'DRAFT
       <PageHeader title="Resumen del Bracket" subtitle="Vista completa de tu pronóstico de octavos" />
 
       {/* Desktop: full bracket */}
-      <div className="hidden lg:block overflow-x-auto">
-        <div className="min-w-[900px] flex items-start gap-0">
-          {/* LEFT BRACKET */}
-          <div className="flex-1">
-            <div className="text-center text-[10px] text-pp-gold-light font-bold tracking-wider mb-3">LLAVE A</div>
-            <BracketColumn slots={leftR16.map(getSlot)} teamNames={teamNames} winner={winner} label="Octavos" />
-          </div>
-          <div className="w-36">
-            <div className="h-6" />
-            <BracketColumn slots={leftQF.map(getSlot)} teamNames={teamNames} winner={winner} label="Cuartos" spacing="lg" />
-          </div>
-          <div className="w-36">
-            <div className="h-6" />
-            <BracketColumn slots={[getSlot(leftSF)]} teamNames={teamNames} winner={winner} label="Semi" spacing="xl" />
-          </div>
-
-          {/* FINAL + 3RD */}
-          <div className="w-44 flex flex-col items-center justify-center pt-16">
-            <MatchBox slot={getSlot('F-01')} teamNames={teamNames} winner={winner} highlight="gold" label="⭐ FINAL" />
-            <div className="my-4" />
-            <MatchBox slot={getSlot('3RD-01')} teamNames={teamNames} winner={winner} highlight="bronze" label="3er Lugar" />
-          </div>
-
-          {/* RIGHT BRACKET */}
-          <div className="w-36">
-            <div className="h-6" />
-            <BracketColumn slots={[getSlot(rightSF)]} teamNames={teamNames} winner={winner} label="Semi" spacing="xl" />
-          </div>
-          <div className="w-36">
-            <div className="h-6" />
-            <BracketColumn slots={rightQF.map(getSlot)} teamNames={teamNames} winner={winner} label="Cuartos" spacing="lg" />
-          </div>
-          <div className="flex-1">
-            <div className="text-center text-[10px] text-pp-gold-light font-bold tracking-wider mb-3">LLAVE B</div>
-            <BracketColumn slots={rightR16.map(getSlot)} teamNames={teamNames} winner={winner} label="Octavos" />
-          </div>
-        </div>
+      <div className="hidden lg:block">
+            <BracketDisplay slots={slots} teamNames={teamNames} />
       </div>
 
       {/* Mobile: stacked */}
