@@ -1,3 +1,4 @@
+//end point reset total
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, isAuthError } from '@/lib/auth';
 import { prisma } from '@/lib/db/client';
